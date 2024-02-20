@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {Navigate} from 'react-router-dom';
+import { UserContext } from './UserContext';
 
 
 const LoginPage = () => {
 
-  const [username,setUsername] = useState('')
+const [username,setUsername] = useState('')
 const [password,setPassword] = useState('')
 const [redirect,setRedirect] = useState(false)
-
+const {setUserInfo}= useContext(UserContext)
 const handlerName =(env)=>{
   setUsername(env.target.value)
 }
@@ -25,7 +26,11 @@ const handlerPw =(env)=>{
       credentials:'include',
      })
      if(res.ok){
-      setRedirect(true)
+      res.json().then(json=>{
+        setUserInfo(json)
+        setRedirect(true)
+
+      })
     }else{
       
       alert('Wrong user name or password ')
