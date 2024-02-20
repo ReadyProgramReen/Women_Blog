@@ -4,9 +4,13 @@ const cors = require('cors')
 const MongoStore = require('connect-mongo')
 const connectDB = require('./config/db')
 const User = require('./models/User')
+const Post = require('./models/Post')
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
+const multer = require('multer')
+const upload = multer({dest: '.middleware/uploads'})
 const bcrypt = require('bcryptjs')
+const fs = require('fs')
 dotenv.config({path: './config/config.env'})
 
 //hash password
@@ -47,7 +51,10 @@ app.post('/login',async(req,res)=>{
         //logged in
         jwt.sign({username,id:userDoc._id}, secret, {},(err,token)=>{
             if(err)throw err;
-            res.cookie('token', token).json('ok')
+            res.cookie('token', token).json({
+                id:userDoc._id,
+                username,
+            })
         })
     }else{
         res.status(400).json('Wrong info')
@@ -70,5 +77,27 @@ app.post('/logout',(req,res)=>{
     res.cookie('token', '').json('ok');
 })
 
+app.post('/post',upload.single('file'),async (req,res)=>{
+    const {originalname, path} = req.file;
+    const parts = originalname.split('.');
+    const ext = parts[parts.length -1];
+    const newPath = path+'.'+ext;
+    fs.renameSync(path, newPath);
+
+    const {title, summary, content} = req.body
+    const postDoc = await Post.create({
+        title,
+        summary,
+        content,
+        cover:newPath
+    })
+
+    res.json(postDoc)
+})
+
+app.get('/post', async(req,res)=>{
+    const post =  await Post.find()
+    res.json(post)
+})
 const PORT = process.env.PORT || 8501
 app.listen(PORT, console.log(`Server running on ${process.env.NODE_ENV} node on port ${PORT}` ))
