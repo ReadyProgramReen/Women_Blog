@@ -97,6 +97,9 @@ button{
 
 }
 
-form h1{
+form.login h1,form.register h1{
   text-align: center;
+}
+button.create{
+margin-top: 5px;
 }
