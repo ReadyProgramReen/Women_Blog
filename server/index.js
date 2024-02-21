@@ -69,7 +69,7 @@ jwt.verify(token, secret , {},(err,info)=>{
 if(err) throw err;
 res.json(info) 
 
-})
+});
 })
 
 
@@ -84,20 +84,33 @@ app.post('/post',upload.single('file'),async (req,res)=>{
     const newPath = path+'.'+ext;
     fs.renameSync(path, newPath);
 
-    const {title, summary, content} = req.body
-    const postDoc = await Post.create({
-        title,
-        summary,
-        content,
-        cover:newPath
-    })
+ 
+    const {token}= req.cookies;
+    jwt.verify(token, secret , {}, async(err,info)=>{
+        if(err) throw err;
+        const {title, summary, content} = req.body
+        const postDoc = await Post.create({
+            title,
+            summary,
+            content,
+            cover:newPath,
+           author:info.id
+        })
+        res.json(postDoc)
+    
+        
+        })
 
-    res.json(postDoc)
+
+    
 })
 
 app.get('/post', async(req,res)=>{
     const post =  await Post.find()
-    res.json(post)
+    .populate('author',['username'])
+    .sort({createdAt: -1})
+    .limit
+    // res.json(post)
 })
 const PORT = process.env.PORT || 8501
 app.listen(PORT, console.log(`Server running on ${process.env.NODE_ENV} node on port ${PORT}` ))
